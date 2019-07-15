@@ -1,0 +1,9 @@
+# environment
+language: python
+
+# version
+python:
+  - "3.6"
+
+script:
+  - pytest -v iapdev/iapdev.py

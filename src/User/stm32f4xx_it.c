@@ -186,27 +186,6 @@ void DMA1_Stream3_IRQHandler(void)
 	DMA_ClearITPendingBit(DMA1_Stream3, DMA_IT_TCIF3);
 }
 
-//uart4_Tx
-void DMA1_Stream4_IRQHandler(void)
-{
-	USART_ITConfig(UART4, USART_IT_TC, ENABLE);
-	DMA_ClearITPendingBit(DMA1_Stream4, DMA_IT_TCIF4);
-}
-
-//uart5_tx
-void DMA1_Stream7_IRQHandler(void)
-{
-	USART_ITConfig(UART5, USART_IT_TC, ENABLE);
-	DMA_ClearITPendingBit(DMA1_Stream7, DMA_IT_TCIF7);
-}
-
-//uart6_tx
-void DMA2_Stream6_IRQHandler(void)
-{
-	USART_ITConfig(USART6, USART_IT_TC, ENABLE);
-	DMA_ClearITPendingBit(DMA2_Stream6, DMA_IT_TCIF6);
-}
-
 void USART2_IRQHandler(void)
 {
 	if (USART_GetFlagStatus(USART2, USART_FLAG_TXE))
@@ -214,9 +193,7 @@ void USART2_IRQHandler(void)
 		GPIO_ResetBits(UART2_Dir_Port, UART2_Dir_Pin);
 		USART_ITConfig(USART2, USART_IT_TC, DISABLE);	
 	} else {}
-	
 	USART_ClearITPendingBit(USART2, USART_IT_TC);
-
 }
 
 void USART3_IRQHandler(void)
@@ -225,43 +202,11 @@ void USART3_IRQHandler(void)
 	{
 		GPIO_ResetBits(UART3_Dir_Port, UART3_Dir_Pin);
 		USART_ITConfig(USART3, USART_IT_TC, DISABLE);
-	} else {}
-	
+	} else {}	
 	USART_ClearITPendingBit(USART3, USART_IT_TC);
 }
 
-void UART4_IRQHandler(void)
-{
-	if (USART_GetFlagStatus(UART4, USART_FLAG_TXE))
-	{
-		GPIO_ResetBits(UART4_Dir_Port, UART4_Dir_Pin);
-		USART_ITConfig(UART4, USART_IT_TC, DISABLE);
-	} else {}
-	
-	USART_ClearITPendingBit(UART4, USART_IT_TC);
-}
-
-void UART5_IRQHandler(void)
-{
-	if (USART_GetFlagStatus(UART5, USART_FLAG_TXE))
-	{
-		GPIO_ResetBits(UART5_Dir_Port, UART5_Dir_Pin);
-		USART_ITConfig(UART5, USART_IT_TC, DISABLE);
-	} else {}
-	
-	USART_ClearITPendingBit(UART5, USART_IT_TC);
-}
-	
-void USART6_IRQHandler(void)
-{
-	if (USART_GetFlagStatus(USART6, USART_FLAG_TXE))
-	{
-		GPIO_ResetBits(UART6_Dir_Port, UART6_Dir_Pin);
-		USART_ITConfig(USART6, USART_IT_TC, DISABLE);
-	} else {}
-	
-	USART_ClearITPendingBit(USART6, USART_IT_TC);
-}
+\
 
 #ifdef __cplusplus
 }

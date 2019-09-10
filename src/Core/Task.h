@@ -9,8 +9,6 @@
 
 #define NAMECODE_CommandDispatchTask			9
 
-
-
 #define NAMECODE_IS_SYS_TASK(x)					(x < 100)
 
 // user task

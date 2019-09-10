@@ -69,11 +69,23 @@ typedef NormalSingleton<CBaseTimer>	BaseTimer;
 class CTimer_base
 {
 	public:
-		CTimer_base(int32_t delay = 1,int32_t period = 1, bool is_sys = false)
+		CTimer_base()
+		{
+			m_start = false;
+		}
+
+		CTimer_base(int32_t period, bool is_sys = false) {
+			_period = period;
+			m_is_sys = is_sys;
+			m_start = false;
+		}
+
+		CTimer_base(int32_t delay, int32_t period, bool is_sys = false)
 		{
 			_starttime = BaseTimer::Instance()->getTime() - period + delay;
 			_period = period;
 			m_is_sys = is_sys;
+			m_start = true;
 		}
 
 		~CTimer_base()
@@ -81,20 +93,33 @@ class CTimer_base
 			BaseTimer::Instance()->detach(this);
 		};
 		
+		void start(){
+			_starttime = BaseTimer::Instance()->getTime();	
+			m_start = true;
+		}
+
+		void stop(){
+			m_start = false;
+		}
+
 		bool isAbsoluteTimeUp()
 		{
-			int32_t tempBaseTimer = BaseTimer::Instance()->getTime();
-			int32_t diff = tempBaseTimer - _starttime;
-			if ( diff < 0 )
-			{
-				diff &= 0x7FFFFFFF;
+			if(m_start){
+				int32_t tempBaseTimer = BaseTimer::Instance()->getTime();
+				int32_t diff = tempBaseTimer - _starttime;
+				if ( diff < 0 )
+				{
+					diff &= 0x7FFFFFFF;
+				}
+				if (diff >= _period)
+				{
+					_starttime = tempBaseTimer;
+					return true;
+				}
+				return false;	
+			} else{
+				return false;
 			}
-			if (diff >= _period)
-			{
-				_starttime = tempBaseTimer;
-				return true;
-			}
-			return false;
 		}
 	
 		void setPeriod(int32_t period) 
@@ -115,7 +140,7 @@ class CTimer_base
 		int32_t _starttime;
 		int32_t _period;
 		bool m_is_sys;
-		
+		bool m_start;
 };
 
 typedef CTimer_base Timer;

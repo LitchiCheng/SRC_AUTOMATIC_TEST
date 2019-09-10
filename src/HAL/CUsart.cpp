@@ -215,13 +215,6 @@ void CUsart::InitSciGpio()
 		GPIO_PinSource_Tx = GPIO_PinSource2;
 		GPIO_PinSource_Rx = GPIO_PinSource3;
 	}
-	else if(IOGroup == GROUP_A9A10)
-	{
-		RCC_AHB1Periph_GPIOx = RCC_AHB1Periph_GPIOA;
-		GPIOx_Tx = GPIOx_Rx = GPIOA;
-		GPIO_PinSource_Tx = GPIO_PinSource9;
-		GPIO_PinSource_Rx = GPIO_PinSource10;
-	}
 	else if(IOGroup == GROUP_B10B11)
 	{
 		RCC_AHB1Periph_GPIOx = RCC_AHB1Periph_GPIOB;
@@ -229,53 +222,24 @@ void CUsart::InitSciGpio()
 		GPIO_PinSource_Tx = GPIO_PinSource10;
 		GPIO_PinSource_Rx = GPIO_PinSource11;
 	}
-	else if(IOGroup == GROUP_C10C11)
-	{
-		RCC_AHB1Periph_GPIOx = RCC_AHB1Periph_GPIOC;
-		GPIOx_Tx = GPIOx_Rx = GPIOC;
-		GPIO_PinSource_Tx = GPIO_PinSource10;
-		GPIO_PinSource_Rx = GPIO_PinSource11;
-	}
-	else if(IOGroup == GROUP_C12D2)
-	{
-		RCC_AHB1Periph_GPIOx = RCC_AHB1Periph_GPIOD|RCC_AHB1Periph_GPIOC;
-		GPIOx_Tx = GPIOC;
-		GPIOx_Rx = GPIOD;
-		GPIO_PinSource_Tx = GPIO_PinSource12;
-		GPIO_PinSource_Rx = GPIO_PinSource2;
-	}
-	else if(IOGroup == GROUP_C6C7)
-	{
-		RCC_AHB1Periph_GPIOx = RCC_AHB1Periph_GPIOC;
-		GPIOx_Tx = GPIOx_Rx = GPIOC;
-		GPIO_PinSource_Tx = GPIO_PinSource6;
-		GPIO_PinSource_Rx = GPIO_PinSource7;
-	}
 	else if(IOGroup == GROUP_D5D6)
 	{
-		RCC_AHB1Periph_GPIOx = RCC_AHB1Periph_GPIOD;
-		GPIOx_Tx = GPIOx_Rx = GPIOD;
+		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+		RCC_AHB1Periph_GPIOx = RCC_AHB1Periph_GPIOA;
+		GPIOx_Tx = GPIOD;
+		GPIOx_Rx = GPIOA;
 		GPIO_PinSource_Tx = GPIO_PinSource5;
-		GPIO_PinSource_Rx = GPIO_PinSource6;
-	}
-	else if(IOGroup == GROUP_D8D9)
-	{
-		RCC_AHB1Periph_GPIOx = RCC_AHB1Periph_GPIOD;
-		GPIOx_Tx = GPIOx_Rx = GPIOD;
-		GPIO_PinSource_Tx = GPIO_PinSource8;
-		GPIO_PinSource_Rx = GPIO_PinSource9;
+		GPIO_PinSource_Rx = GPIO_PinSource3;
 	}
 	else seer_assert(false); //undefined!
 
 	if(USARTx_ == USART1)	GPIO_AF_USARTx = GPIO_AF_USART1;
 	else if(USARTx_ == USART2)	GPIO_AF_USARTx = GPIO_AF_USART2;
 	else if(USARTx_ == USART3)	GPIO_AF_USARTx = GPIO_AF_USART3;
-	else if(USARTx_ == UART4)	GPIO_AF_USARTx = GPIO_AF_UART4;
-	else if(USARTx_ == UART5)	GPIO_AF_USARTx = GPIO_AF_UART5;
-	else if(USARTx_ == USART6)	GPIO_AF_USARTx = GPIO_AF_USART6;
 	else seer_assert(false); //undefined!
 
 	/* open clock of GPIO */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOx, ENABLE);
 
 	/* Config Pin: TXD RXD*/
@@ -307,9 +271,6 @@ void CUsart::InitSci()
 	if(USARTx_ == USART1) RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
 	else if(USARTx_ == USART2) RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
 	else if(USARTx_ == USART3) RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
-	else if(USARTx_ == UART4) RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART4, ENABLE);
-	else if(USARTx_ == UART5) RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5, ENABLE);
-	else if(USARTx_ == USART6) RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART6, ENABLE);
 	else seer_assert(false);
 
 	/* Deinitializes the USARTx */
@@ -509,12 +470,6 @@ DMA_Stream_TypeDef * CUsart::TxDMA(USART_TypeDef * targetUart)
 		return DMA1_Stream6;
 	else if(USART3 == targetUart)
 		return DMA1_Stream3;
-	else if(UART4 == targetUart)
-		return DMA1_Stream4;
-	else if(UART5 == targetUart)
-		return DMA1_Stream7;
-	else if(USART6 == targetUart)
-		return DMA2_Stream6;
 	else
 		seer_assert(false);
 
@@ -535,12 +490,6 @@ DMA_Stream_TypeDef * CUsart::RxDMA(USART_TypeDef * targetUart)
 		return DMA1_Stream5;
 	else if(USART3 == targetUart)
 		return DMA1_Stream1;
-	else if(UART4 == targetUart)
-		return DMA1_Stream2;
-	else if(UART5 == targetUart)
-		return DMA1_Stream0;
-	else if(USART6 == targetUart)
-		return DMA2_Stream1;
 	else
 		seer_assert(false);
 
@@ -561,12 +510,6 @@ CUsart::IOGroup_Type CUsart::BspIOGroup(USART_TypeDef * targetUart)
 		return GROUP_D5D6;
 	else if(USART3 == targetUart)
 		return GROUP_B10B11;
-	else if(UART4 == targetUart)
-		return GROUP_C10C11;
-	else if(UART5 == targetUart)
-		return GROUP_C12D2;
-	else if(USART6 == targetUart)
-		return GROUP_C6C7;
 	else
 		seer_assert(false);
 
@@ -609,32 +552,16 @@ void CUsart::clearErr()
 
 void CUsart::setFlowPinToTxMode(void)
 {
-	if (USART2 == USARTx_)
-		GPIO_SetBits(UART2_Dir_Port, UART2_Dir_Pin);
-	else if(USART3 == USARTx_)
+	if(USART3 == USARTx_)
 		GPIO_SetBits(UART3_Dir_Port, UART3_Dir_Pin);
-	else if(UART4 == USARTx_)
-		GPIO_SetBits(UART4_Dir_Port, UART4_Dir_Pin);
-	else if(UART5 == USARTx_)
-		GPIO_SetBits(UART5_Dir_Port, UART5_Dir_Pin);
-	else if (USART6 == USARTx_)
-	{
-		GPIO_SetBits(UART6_Dir_Port, UART6_Dir_Pin);
-	}
+	else
+	{}
 }
 
 void CUsart::setFlowPinToRxMode(void)
 {
-	if (USART2 == USARTx_)
-		GPIO_ResetBits(UART2_Dir_Port, UART2_Dir_Pin);
-	else if (USART3 == USARTx_)
+	if (USART3 == USARTx_)
 		GPIO_ResetBits(UART3_Dir_Port, UART3_Dir_Pin);
-	else if (UART4 == USARTx_)
-		GPIO_ResetBits(UART4_Dir_Port, UART4_Dir_Pin);
-	else if (UART5 == USARTx_)
-		GPIO_ResetBits(UART5_Dir_Port, UART5_Dir_Pin);
-	else if (USART6 == USARTx_)
-		GPIO_ResetBits(UART6_Dir_Port, UART6_Dir_Pin);
 	else {}
 }
 
@@ -647,12 +574,6 @@ void CUsart::config_DMA_IRQ(void)
 		DMAx_Streamy_IRQn = DMA1_Stream6_IRQn;
 	else if(USART3 == USARTx_)
 		DMAx_Streamy_IRQn = DMA1_Stream3_IRQn;
-	else if(UART4 == USARTx_)
-		DMAx_Streamy_IRQn = DMA1_Stream4_IRQn;
-	else if(UART5 == USARTx_)
-		DMAx_Streamy_IRQn = DMA1_Stream7_IRQn;
-	else if(USART6 == USARTx_)
-		DMAx_Streamy_IRQn = DMA2_Stream6_IRQn;
 	
 	DMA_Stream_TypeDef * DMAx_Streamy;
 	
@@ -660,25 +581,13 @@ void CUsart::config_DMA_IRQ(void)
 		DMAx_Streamy = DMA1_Stream6;
 	else if(USART3 == USARTx_)
 		DMAx_Streamy = DMA1_Stream3;
-	else if(UART4 == USARTx_)
-		DMAx_Streamy = DMA1_Stream4;
-	else if(UART5 == USARTx_)
-		DMAx_Streamy = DMA1_Stream7;
-	else if(USART6 == USARTx_)
-		DMAx_Streamy = DMA2_Stream6;
 	
 	if(USART2 == USARTx_)
 		USART_IRQn = USART2_IRQn;
 	else if(USART3 == USARTx_)
 		USART_IRQn = USART3_IRQn;
-	else if(UART4 == USARTx_)
-		USART_IRQn = UART4_IRQn;
-	else if(UART5 == USARTx_)
-		USART_IRQn = UART5_IRQn;
-	else if(USART6 == USARTx_)
-		USART_IRQn = USART6_IRQn;
 	
-	if (USARTx_ != USART1)
+	if ((USARTx_ != USART1) && (USARTx_ != USART2))
 	{
 		NVIC_InitTypeDef NVIC_InitStructure;
 		NVIC_InitStructure.NVIC_IRQChannel = DMAx_Streamy_IRQn;
@@ -701,6 +610,7 @@ void CUsart::config_DMA_IRQ(void)
 
 void CUsart::GPIO_Dir_Config(void)
 {
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
 	if (USART1 != USARTx_)
 	{
 		GPIO_InitTypeDef GPIO_InitStructure;
@@ -710,35 +620,11 @@ void CUsart::GPIO_Dir_Config(void)
 		GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
 		
-		if(USART2 == USARTx_)
-		{
-			GPIO_InitStructure.GPIO_Pin = UART2_Dir_Pin;
-			GPIO_Init(UART2_Dir_Port, &GPIO_InitStructure);
-			GPIO_ResetBits(UART2_Dir_Port, UART2_Dir_Pin);
-		}
-		else if(USART3 == USARTx_)
+		if(USART3 == USARTx_)
 		{
 			GPIO_InitStructure.GPIO_Pin = UART3_Dir_Pin;
 			GPIO_Init(UART3_Dir_Port, &GPIO_InitStructure);
 			GPIO_ResetBits(UART3_Dir_Port, UART3_Dir_Pin);
-		}
-		else if(UART4 == USARTx_)
-		{
-			GPIO_InitStructure.GPIO_Pin = UART4_Dir_Pin;
-			GPIO_Init(UART4_Dir_Port, &GPIO_InitStructure);
-			GPIO_ResetBits(UART4_Dir_Port, UART4_Dir_Pin);
-		}
-		else if(UART5 == USARTx_)
-		{
-			GPIO_InitStructure.GPIO_Pin = UART5_Dir_Pin;
-			GPIO_Init(UART5_Dir_Port, &GPIO_InitStructure);
-			GPIO_ResetBits(UART5_Dir_Port, UART5_Dir_Pin);
-		}
-		else if(USART6 == USARTx_)
-		{
-			GPIO_InitStructure.GPIO_Pin = UART6_Dir_Pin;
-			GPIO_Init(UART6_Dir_Port, &GPIO_InitStructure);
-			GPIO_ResetBits(UART6_Dir_Port, UART6_Dir_Pin);
 		}
 	} else {}
 }
@@ -746,22 +632,9 @@ void CUsart::GPIO_Dir_Config(void)
 void CUsart::TE_Enable(bool flag)
 {
 	
-#define UART2_TE_Pin	GPIO_Pin_3
-#define UART2_TE_Port	GPIOD
 #define UART3_TE_Pin	GPIO_Pin_14
 #define UART3_TE_Port	GPIOE
-#define UART4_TE_Pin	GPIO_Pin_8
-#define UART4_TE_Port	GPIOC
-#define UART5_TE_Pin	GPIO_Pin_14
-#define UART5_TE_Port	GPIOD
-#define UART6_TE_Pin	GPIO_Pin_8
-#define UART6_TE_Port	GPIOG
-#define UART6_SEL_Pin	GPIO_Pin_6
-#define UART6_SEL_Port	GPIOG
-#define UART6_SHDN_Pin	GPIO_Pin_7
-#define UART6_SHDN_Port	GPIOG
-	
-	
+
 	if (USART1 != USARTx_)
 	{
 		GPIO_InitTypeDef GPIO_InitStructure;
@@ -773,51 +646,12 @@ void CUsart::TE_Enable(bool flag)
 		GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
 		
-		if(USART2 == USARTx_)
-		{
-			Pin = UART2_TE_Pin;
-			GPIOx = UART2_TE_Port;
-		}
-		else if(USART3 == USARTx_)
+		if(USART3 == USARTx_)
 		{
 			Pin = UART3_TE_Pin;
 			GPIOx = UART3_TE_Port;
 		}
-		else if(UART4 == USARTx_)
-		{
-			Pin = UART4_TE_Pin;
-			GPIOx = UART4_TE_Port;
-		}
-		else if(UART5 == USARTx_)
-		{
-			Pin = UART5_TE_Pin;
-			GPIOx = UART5_TE_Port;
-		}
-		else if(USART6 == USARTx_)
-		{
-			GPIOx = UART6_TE_Port;
-			
-			GPIO_InitStructure.GPIO_Pin = UART6_SEL_Pin;
-			GPIO_Init(GPIOx, &GPIO_InitStructure);
-			if (is_485())
-			{
-				GPIO_SetBits(GPIOx, UART6_SEL_Pin);
-			}
-			else
-			{
-				GPIO_ResetBits(GPIOx, UART6_SEL_Pin);
-			}
-
-			GPIO_InitStructure.GPIO_Pin = UART6_SHDN_Pin;
-			GPIO_Init(GPIOx, &GPIO_InitStructure);
-			GPIO_SetBits(GPIOx, UART6_SHDN_Pin);
-
-		//	GPIO_InitStructure.GPIO_Pin = UART6_SHDN_Pin;
-		//	GPIO_Init(GPIOx, &GPIO_InitStructure);
-		//	GPIO_SetBits(GPIOx, UART6_SHDN_Pin);
-			
-			Pin = UART6_TE_Pin;
-		} else {}
+		else {}
 		
 		GPIO_InitStructure.GPIO_Pin = Pin;
 		GPIO_Init(GPIOx, &GPIO_InitStructure);
@@ -832,7 +666,7 @@ void CUsart::set_232_mode(void)
 {
 	if (USART6 == USARTx_)
 	{
-		GPIO_ResetBits(UART6_SEL_Port, UART6_SEL_Pin);
+		//GPIO_ResetBits(UART6_SEL_Port, UART6_SEL_Pin);
 		m_is_485 = false;
 	}
 }
@@ -841,7 +675,7 @@ void CUsart::set_485_mode(void)
 {
 	if (USART6 == USARTx_)
 	{	
-		GPIO_SetBits(UART6_SEL_Port, UART6_SEL_Pin);
+		//GPIO_SetBits(UART6_SEL_Port, UART6_SEL_Pin);
 		m_is_485 = true;
 	}
 }

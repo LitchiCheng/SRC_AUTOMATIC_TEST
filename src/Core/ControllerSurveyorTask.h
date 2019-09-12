@@ -14,21 +14,15 @@ class CControllerSurveyorTask : public CTask
 {
 public:
 	CControllerSurveyorTask();
-	virtual ~CControllerSurveyorTask();
+	virtual ~CControllerSurveyorTask(){}
 	virtual int doRun();
 	virtual void initial();
 	void udpRecieveRun();
 	void udpTx(uint8_t* tx_buff, uint16_t tx_len);
-
 private:
 	Timer _t;
-	// for serial ports
-	Timer _comTxTimer;
-	// for can
-	Timer _canTxTimer;
 	CCanRouter& _canRouter_1;
 	sockaddr_in remoteaddr;
 	socklen_t remoteaddrlen; 
 };
-
 #endif

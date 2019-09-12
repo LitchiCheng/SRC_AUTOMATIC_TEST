@@ -554,15 +554,12 @@ void CUsart::setFlowPinToTxMode(void)
 {
 	if(USART3 == USARTx_)
 		GPIO_SetBits(UART3_Dir_Port, UART3_Dir_Pin);
-	else
-	{}
 }
 
 void CUsart::setFlowPinToRxMode(void)
 {
 	if (USART3 == USARTx_)
 		GPIO_ResetBits(UART3_Dir_Port, UART3_Dir_Pin);
-	else {}
 }
 
 void CUsart::config_DMA_IRQ(void)
@@ -576,33 +573,28 @@ void CUsart::config_DMA_IRQ(void)
 		DMAx_Streamy_IRQn = DMA1_Stream3_IRQn;
 	
 	DMA_Stream_TypeDef * DMAx_Streamy;
-	
 	if(USART2 == USARTx_)
 		DMAx_Streamy = DMA1_Stream6;
 	else if(USART3 == USARTx_)
 		DMAx_Streamy = DMA1_Stream3;
 	
-	if(USART2 == USARTx_)
-		USART_IRQn = USART2_IRQn;
-	else if(USART3 == USARTx_)
+	if(USART3 == USARTx_)
 		USART_IRQn = USART3_IRQn;
 	
-	if ((USARTx_ != USART1) && (USARTx_ != USART2))
-	{
 		NVIC_InitTypeDef NVIC_InitStructure;
 		NVIC_InitStructure.NVIC_IRQChannel = DMAx_Streamy_IRQn;
 		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
 		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-		
 		NVIC_Init(&NVIC_InitStructure);	
 		DMA_ITConfig(DMAx_Streamy, DMA_IT_TC, ENABLE);
 		
+		if ((USARTx_ != USART1) && (USARTx_ != USART2))
+	{
 		NVIC_InitStructure.NVIC_IRQChannel = USART_IRQn;
 		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
 		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
 		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-		
 		NVIC_Init(&NVIC_InitStructure);	
 		USART_ITConfig(USARTx_, USART_IT_TC, DISABLE);
 	}
@@ -626,7 +618,7 @@ void CUsart::GPIO_Dir_Config(void)
 			GPIO_Init(UART3_Dir_Port, &GPIO_InitStructure);
 			GPIO_ResetBits(UART3_Dir_Port, UART3_Dir_Pin);
 		}
-	} else {}
+	}
 }
 
 void CUsart::TE_Enable(bool flag)
@@ -659,7 +651,7 @@ void CUsart::TE_Enable(bool flag)
 			GPIO_ResetBits(GPIOx, Pin);
 		else 
 			GPIO_SetBits(GPIOx, Pin);
-	} else {}
+	}
 }
 
 void CUsart::set_232_mode(void)

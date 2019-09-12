@@ -31,6 +31,8 @@ extern "C" {
 #endif 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
+#include "Console.h"
+#include "CUsart.h"
 
 /** @addtogroup EEPROM_Emulation
   * @{
@@ -175,7 +177,6 @@ void DMA2_Stream7_IRQHandler(void)
 //uart2_tx
 void DMA1_Stream6_IRQHandler(void)
 {
-	USART_ITConfig(USART2, USART_IT_TC, ENABLE);
 	DMA_ClearITPendingBit(DMA1_Stream6, DMA_IT_TCIF6);
 }
 
@@ -186,15 +187,6 @@ void DMA1_Stream3_IRQHandler(void)
 	DMA_ClearITPendingBit(DMA1_Stream3, DMA_IT_TCIF3);
 }
 
-void USART2_IRQHandler(void)
-{
-	if (USART_GetFlagStatus(USART2, USART_FLAG_TXE))
-	{
-		GPIO_ResetBits(UART2_Dir_Port, UART2_Dir_Pin);
-		USART_ITConfig(USART2, USART_IT_TC, DISABLE);	
-	} else {}
-	USART_ClearITPendingBit(USART2, USART_IT_TC);
-}
 
 void USART3_IRQHandler(void)
 {

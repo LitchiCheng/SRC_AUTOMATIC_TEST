@@ -10,13 +10,14 @@
       <TargetName>SY-STM32F407 V2.0</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060422::V5.06 update 4 (build 422)::ARMCC</pCCUsed>
+      <pCCUsed>5060750::V5.06 update 6 (build 750)::ARMCC</pCCUsed>
+      <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
           <Device>STM32F407ZGTx</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32F4xx_DFP.2.13.0</PackID>
-          <PackURL>http://www.keil.com/pack</PackURL>
+          <PackID>Keil.STM32F4xx_DFP.2.14.0</PackID>
+          <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000,0x20000) IRAM2(0x10000000,0x10000) IROM(0x08000000,0x100000) CPUTYPE("Cortex-M4") FPU2 CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
@@ -183,6 +184,7 @@
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
             <RvdsVP>2</RvdsVP>
+            <RvdsMve>0</RvdsMve>
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -323,6 +325,7 @@
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>1</uC99>
+            <uGnu>0</uGnu>
             <useXO>0</useXO>
             <v6Lang>0</v6Lang>
             <v6LangP>0</v6LangP>
@@ -530,19 +533,9 @@
           <GroupName>logger</GroupName>
           <Files>
             <File>
-              <FileName>CCanConsole.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\src\logger\CCanConsole.cpp</FilePath>
-            </File>
-            <File>
               <FileName>Console.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\..\src\logger\Console.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>CUartConsole.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\src\logger\CUartConsole.cpp</FilePath>
             </File>
             <File>
               <FileName>CUdpConsole.cpp</FileName>
@@ -565,29 +558,9 @@
               <FilePath>..\..\src\HAL\CommonConfig.c</FilePath>
             </File>
             <File>
-              <FileName>CCan.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\src\HAL\CCan.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>CUsart.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\src\HAL\CUsart.cpp</FilePath>
-            </File>
-            <File>
               <FileName>Timer.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\..\src\HAL\Timer.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>watchDog.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\src\HAL\watchDog.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>CSpi.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\src\HAL\CSpi.cpp</FilePath>
             </File>
             <File>
               <FileName>stmflash.c</FileName>

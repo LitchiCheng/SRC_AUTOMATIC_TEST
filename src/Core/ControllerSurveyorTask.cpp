@@ -7,23 +7,6 @@
 
 static void ledGpioInit();
 static void ledRun();
-static void diTest2000Do();
-static void canTest2000();
-static void uart485Run();
-static void canTest2000();
-static void openPCRun();
-static void closePCRun();
-static void chargeAndEmergencyRun();
-static void brakeOrDIRun();
-static void detectPDORun();
-static void detectPCLight();
-static void detectEmergency();
-static void detectBrake();
-static void uartChangeRun();
-static void uart232Run();
-static void CanDispatchRun();
-static void detectDelay();
-static void detectWarningLight();
 
 namespace{
 	const uint16_t RPT_DESTPORT = 5002;
@@ -125,6 +108,29 @@ static void resetAllSwitch()
 	detect_warninglight = false;
 }
 
+static void resetAllResult()
+{
+	for(int i=0;i<4;i++){
+		is_485_test_ok[i] = false;
+	}
+	is_232_test_ok = false;
+	is_can1_test_ok = false;
+	is_can2_test_ok = false;
+	is_all_pdo_on = false;
+	is_all_pdo_off = false;
+	is_boot_light_on = false;
+	is_manual_charge_ok = false;
+	is_auto_charge_ok = false;
+	is_emc_out1_ok = false;
+	is_emc_out2_ok = false;
+	is_emc_light_on = false;
+	is_2000_di_on = false;
+	is_2000_di_off = false;
+	is_brake12_ok = false;
+	is_brake24_ok = false;
+	is_delay_ok = false;
+	is_warning_light_on = false;
+}
 
 CControllerSurveyorTask::CControllerSurveyorTask(): CTask(NAMECODE_ControllerSurveyorTask),_t(2000,2000),_canRouter_1(CanRouter1)
 {
@@ -153,20 +159,8 @@ void CControllerSurveyorTask::initial()
 	di_test_2000_do.open();
 	do_test_2000_di.open();
 
-	open_pc_switch = false;
-	close_pc_switch = false;
-	charge_and_emergency_switch = false;
-	is_brake_or_di_switch = false;
-	detect_pdo_switch = false;
-	detect_pc_light = false;
-	detect_emergency = false;
-	detect_brake = false;
-	is_232_or_485_mode = false;
-	can_test_switch = false;
-	rs485_test_switch = false;
-	rs232_test_switch = false;
-	detect_delay = false;
-	detect_warninglight = false;
+	resetAllSwitch();
+	resetAllResult();
 }
 
 int CControllerSurveyorTask::doRun()
@@ -174,49 +168,64 @@ int CControllerSurveyorTask::doRun()
 	/******************心跳灯*************************/
 	ledRun();
 	/**************************************************/
+	
+	/*****************网络接收*************************/
+	udpRecieveRun();
+	/**************************************************/
+	
+	/*********************任务调度************************/
+	CanDispatchRun();
+	/****************************************************/
+	
 	/******************开关机动作**********************/
 	openPCRun();
 	closePCRun();
 	/*************************************************/
-	/****************手自动充电和急停测试*********************/
+	
+	/****************手自动充电和急停测试*************/
 	chargeAndEmergencyRun();
 	/**************************************************/
-	/*****************网络接收*************************/
-	udpRecieveRun();
-	/**************************************************/
+	
 	/******************抱闸和DI测试*********************/
 	brakeOrDIRun();
 	/**************************************************/
+	
 	/******************读DO测试*************************/
 	detectPDORun();
 	/***************************************************/
+	
 	/*****************检测开机灯*************************/
 	detectPCLight();
 	/****************************************************/
-	/*****************检测急停****************************/
+	
+	/*****************检测急停*************************/
 	detectEmergency();
 	/**************************************************/
+	
 	/******************抱闸检测************************/
 	detectBrake();
 	/***************************************************/
+	
 	/******************Can发送接收**********************/
 	canTest2000();
 	/***************************************************/
+	
 	/********************485测试*************************/
 	uart485Run();
 	/*****************************************************/
+	
 	/********************232测试***********************/
 	uart232Run();
 	/***************************************************/
+	
 	/*****************232或485模式切换******************/
 	uartChangeRun();
 	/****************************************************/
-	/*********************任务调度************************/
-	CanDispatchRun();
-	/****************************************************/
+
 	/***********************继电器测试*********************/
 	detectDelay();
 	/****************************************************/
+	
 	/********************报警灯测试*********************/
 	detectWarningLight();
 	/***************************************************/ 
@@ -245,6 +254,7 @@ void CControllerSurveyorTask::udpRecieveRun()
 		destport = ntohs(remoteaddr.sin_port);
 		if(udp_rx_buff[0] == 0x12 && udp_rx_buff[1] == 0x34){
 			resetAllSwitch();
+			resetAllResult();
 			can_test_case_select = udp_rx_buff[2];
 			Console::Instance()->printf("TEST CASE RECEIVE IS 0x%02x \r\n", can_test_case_select);
 			can_dispatch_switch = true;
@@ -291,7 +301,7 @@ static void ledRun()
 	}
 }
 
-static void detectWarningLight()
+void CControllerSurveyorTask::detectWarningLight()
 {
 	static Timer test_warning_light(100,100);
 	if(detect_warninglight)
@@ -299,17 +309,25 @@ static void detectWarningLight()
 		di_test_2000_do.ioctl(0x02);		//切换成DI模式
 		if(di_test_2000_do.read(GPIOG, GPIO_Pin_4)){
 			is_warning_light_on = true;
+			
 		}else{
 			is_warning_light_on = false;
 		}
 		if(test_warning_light.isAbsoluteTimeUp())
 		{
+			if(is_warning_light_on){
+				uint8_t result[4] = {0x56,0x78,0x13,0xFF};
+				udpTx(result,4);
+			}else{
+				uint8_t result[4] = {0x56,0x78,0x14,0xFF};
+				udpTx(result,4);
+			}
 			Console::Instance()->printf("WARNING LIGHT  IS %d\r\n",di_test_2000_do.read(GPIOG, GPIO_Pin_4));
 		}
 	}
 }
 
-static void detectBrake()
+void CControllerSurveyorTask::detectBrake()
 {
 	static Timer test_brake(100,100);
 	if(detect_brake)
@@ -322,9 +340,16 @@ static void detectBrake()
 		}
 		if(di_test_2000_do.read(GPIOC, GPIO_Pin_9)){
 			is_brake24_ok = true;
-		}
+		}	
 		if(test_brake.isAbsoluteTimeUp())
 		{
+			if(is_brake12_ok && is_brake24_ok){
+				uint8_t result[4] = {0x56,0x78,0x0B,0xFF};
+				udpTx(result,4);
+			}else if(!is_brake12_ok){
+				uint8_t result[4] = {0x56,0x78,0x0C,0xFF};
+				udpTx(result,4);
+			}
 			Console::Instance()->printf("BRAKE 12 IS %d\r\n",di_test_2000_do.read(GPIOC, GPIO_Pin_7));
 			Console::Instance()->printf("BRAKE 24 IS %d\r\n",di_test_2000_do.read(GPIOC, GPIO_Pin_9));
 			Console::Instance()->printf("is_brake12_ok %d\r\n",is_brake12_ok);
@@ -333,7 +358,7 @@ static void detectBrake()
 	}
 }
 
-static void detectDelay()
+void CControllerSurveyorTask::detectDelay()
 {
 	static Timer test_Delay(100,100);
 	if(detect_delay)
@@ -345,13 +370,19 @@ static void detectDelay()
 			is_delay_ok = false;
 		}
 		if(test_Delay.isAbsoluteTimeUp()){
+			if(is_delay_ok){
+				uint8_t result[4] = {0x56,0x78,0x0F,0xFF};
+				udpTx(result,4);
+			}else{
+				uint8_t result[4] = {0x56,0x78,0x10,0xFF};
+				udpTx(result,4);
+			}
 			Console::Instance()->printf("is_delay_ok %d\r\n",is_delay_ok);
-		}
-		
+		}	
 	}
 }
 
-static void detectEmergency()
+void CControllerSurveyorTask::detectEmergency()
 {
 	static Timer test_emergency(100,100);
 	if(detect_emergency)
@@ -374,16 +405,22 @@ static void detectEmergency()
 		}
 		if(test_emergency.isAbsoluteTimeUp())
 		{
+			if(is_emc_out2_ok && is_emc_out1_ok && is_emc_light_on){
+				uint8_t result[4] = {0x56,0x78,0x07,0xFF};
+				udpTx(result,4);
+			}else if(!is_emc_out2_ok && !is_emc_out1_ok && !is_emc_light_on){
+				uint8_t result[4] = {0x56,0x78,0x08,0xFF};
+				udpTx(result,4);
+			}
 			Console::Instance()->printf("\r\n");
 			Console::Instance()->printf("EMERGENCE_OUT_2  IS %d\r\n",di_test_2000_do.read(GPIOD, GPIO_Pin_13));
 			Console::Instance()->printf("EMERGENCE_OUT_1  IS %d\r\n",di_test_2000_do.read(GPIOD, GPIO_Pin_14));
 			Console::Instance()->printf("EMERGENCE_LIGHT  IS %d\r\n",di_test_2000_do.read(GPIOD, GPIO_Pin_15));
 		}
-
 	}
 }
 
-static void detectPDORun()
+void CControllerSurveyorTask::detectPDORun()
 {
 	static Timer testdo(100,100);
 	if(detect_pdo_switch)
@@ -394,16 +431,27 @@ static void detectPDORun()
 		di_test_2000_do.read(GPIOC, GPIO_Pin_6) && di_test_2000_do.read(GPIOG, GPIO_Pin_5) &&
 		di_test_2000_do.read(GPIOG, GPIO_Pin_6)){
 			is_all_pdo_on = true;
+		}else{
+			is_all_pdo_on = false;
 		}
-		if(!di_test_2000_do.read(GPIOG, GPIO_Pin_3) || !di_test_2000_do.read(GPIOC, GPIO_Pin_8) ||
-		!di_test_2000_do.read(GPIOG, GPIO_Pin_7) || !di_test_2000_do.read(GPIOG, GPIO_Pin_8) ||
-		!di_test_2000_do.read(GPIOC, GPIO_Pin_6) || !di_test_2000_do.read(GPIOG, GPIO_Pin_5) ||
+		if(!di_test_2000_do.read(GPIOG, GPIO_Pin_3) && !di_test_2000_do.read(GPIOC, GPIO_Pin_8) &&
+		!di_test_2000_do.read(GPIOG, GPIO_Pin_7) && !di_test_2000_do.read(GPIOG, GPIO_Pin_8) &&
+		!di_test_2000_do.read(GPIOC, GPIO_Pin_6) && !di_test_2000_do.read(GPIOG, GPIO_Pin_5) &&
 		!di_test_2000_do.read(GPIOG, GPIO_Pin_6)){
 			is_all_pdo_off = true;
+		}else{
+			is_all_pdo_off = false;
 		}
 		
 		if(testdo.isAbsoluteTimeUp())
 		{
+			if(is_all_pdo_on){
+				uint8_t result[4] = {0x56,0x78,0x04,0xFF};
+				udpTx(result,4);
+			}else if(is_all_pdo_off){
+				uint8_t result[4] = {0x56,0x78,0x05,0xFF};
+				udpTx(result,4);
+			}
 			Console::Instance()->printf("\r\n");
 			Console::Instance()->printf("pdo test on status is %d\r\n", is_all_pdo_on);
 			Console::Instance()->printf("pdo test off status is %d\r\n", is_all_pdo_off);
@@ -418,7 +466,7 @@ static void detectPDORun()
 	}
 }
 
-static void  detectPCLight()
+void CControllerSurveyorTask::detectPCLight()
 {
 	static Timer test_pc_light(100,100);
 	if(detect_pc_light)
@@ -430,11 +478,22 @@ static void  detectPCLight()
 			is_boot_light_on = false;
 		}
 		if(test_pc_light.isAbsoluteTimeUp())
+		{
+			if(di_test_2000_do.read(GPIOG, GPIO_Pin_2)){
+				is_boot_light_on = true;
+				uint8_t result[4] = {0x56,0x78,0x06,0xFF};
+				udpTx(result,4);
+			}else{
+				is_boot_light_on = false;
+				uint8_t result[4] = {0x56,0x78,0x06,0x00};
+				udpTx(result,4);
+			}
 			Console::Instance()->printf("bootlight IS %d\r\n",di_test_2000_do.read(GPIOG, GPIO_Pin_2));
+		}
 	}	
 }
 
-static void uartChangeRun()
+void CControllerSurveyorTask::uartChangeRun()
 {
 	if(is_232_or_485_mode)
 	{
@@ -450,7 +509,7 @@ static void uartChangeRun()
 	}
 }
 
-static void brakeOrDIRun()
+void CControllerSurveyorTask::brakeOrDIRun()
 {
 	if(is_brake_or_di_switch)
 	{
@@ -466,7 +525,7 @@ static void brakeOrDIRun()
 	}
 }
 
-static void chargeAndEmergencyRun()
+void CControllerSurveyorTask::chargeAndEmergencyRun()
 {
 	if(charge_and_emergency_switch)
 	{
@@ -480,7 +539,7 @@ static void chargeAndEmergencyRun()
 	}
 }
 
-static void openPCRun()
+void CControllerSurveyorTask::openPCRun()
 {
 	static Timer open_pc_time(500);
 	do_test_2000_di.ioctl(0x01);
@@ -494,13 +553,12 @@ static void openPCRun()
 	if(open_pc_time.isAbsoluteTimeUp())
 	{
 		do_test_2000_di.write(0, GPIOD, GPIO_Pin_10);
-		
 		open_pc_time.stop();
 		Console::Instance()->printf("open pc finished....\r\n");
 	}
 }
 
-static void closePCRun()
+void CControllerSurveyorTask::closePCRun()
 {
 	static Timer close_pc_time(3000);
 	do_test_2000_di.ioctl(0x01);
@@ -519,7 +577,7 @@ static void closePCRun()
 	}
 }
 
-static void canTest2000()
+void CControllerSurveyorTask::canTest2000()
 {
 	static Timer can_tx_freq(50);
 	if(can_test_switch)
@@ -539,11 +597,9 @@ static void canTest2000()
 		msg.StdId = 2;
 		memcpy(msg.Data, i_am_can_test, 8);
 		CanRouter1.putMsg(msg);  
-		//Console::Instance()->printf("asdfasdfsdfsdf \r\n");
 	}
 	if (can_mailbox_test_2000.msgsInQue() > 0)
 	{
-		//Console::Instance()->printf("asdfasdfsdfsdf \r\n");
 		CanRxMsg rx_msg;        
 		can_mailbox_test_2000.getMsg(&rx_msg);
 		if(memcmp(rx_msg.Data, it_is_can1, 8) == 0){
@@ -557,11 +613,13 @@ static void canTest2000()
 		if(is_can1_test_ok && is_can2_test_ok)
 		{
 			can_tx_freq.stop();
+			uint8_t result[4] = {0x56,0x78,0x03,0xFF};
+			udpTx(result,4);
 		}
 	}	
 }
 
-static void uart485Run()
+void CControllerSurveyorTask::uart485Run()
 {
 	static Timer transfer_frq(500);
 	if(rs485_test_switch)
@@ -605,13 +663,15 @@ static void uart485Run()
 			{
 				is_485_test_ok[3] = true;
 				Console::Instance()->printf("485 TEST IS OK \r\n");
-				transfer_frq.stop();	
+				transfer_frq.stop();
+				uint8_t result[4] = {0x56,0x78,0x02,0xFF};
+				udpTx(result,4);				
 			}
 		}
 	}
 }
 
-static void uart232Run()
+void CControllerSurveyorTask::uart232Run()
 {	
 	static Timer transfer_frq(500);
 	if(rs232_test_switch)
@@ -641,18 +701,20 @@ static void uart232Run()
 				is_232_test_ok = true;
 				Console::Instance()->printf("232 TEST IS OK \r\n");
 				transfer_frq.stop();
+				uint8_t result[4] = {0x56,0x78,0x01,0xFF};
+				udpTx(result,4);
 			}
 		}	
 	}
 }
 
 #include "string.h"
-static void CanDispatchRun()
+void CControllerSurveyorTask::CanDispatchRun()
 {
 	static Timer can_transfer_freq(100,100);
 	if (can_transfer_freq.isAbsoluteTimeUp() && can_dispatch_switch)
     {
-		resetAllSwitch();
+		//resetAllSwitch();
 		CanTxMsg msg;
 		msg.IDE = CAN_Id_Standard;
 		msg.RTR = CAN_RTR_Data;
@@ -710,7 +772,7 @@ static void CanDispatchRun()
 			case 0x0E:	//DI接地
 				is_brake_or_di_switch = false;
 				break;
-			case 0x0F:	//测试继电器
+			case 0x0F:	//断开继电器
 				detect_delay = true;
 				break;
 			case 0x10:	//打开继电器
@@ -753,6 +815,10 @@ static void CanDispatchRun()
 					is_auto_charge_ok = true;
 					Console::Instance()->printf("auto is ok\r\n");
 				}
+				if(is_manual_charge_ok && is_auto_charge_ok){
+					uint8_t result[4] = {0x56,0x78,0x09,0xFF};
+					udpTx(result,4);
+				}
 				break;
 			case 0x0A:
 				if(rx_msg.Data[2] == 0xFF){
@@ -763,17 +829,29 @@ static void CanDispatchRun()
 					is_auto_charge_ok = false;
 					Console::Instance()->printf("auto is not tie ground\r\n");
 				}
+				if(!is_manual_charge_ok && !is_auto_charge_ok){
+					uint8_t result[4] = {0x56,0x78,0x0A,0xFF};
+					udpTx(result,4);
+				}
 				break;
 			case 0x0D:
 				if(rx_msg.Data[2] == 0xFF){
 					is_2000_di_off = true;
 					Console::Instance()->printf("di is all off\r\n");
 				}
+				if(is_2000_di_off){
+					uint8_t result[4] = {0x56,0x78,0x0D,0xFF};
+					udpTx(result,4);
+				}
 				break;
 			case 0x0E:
 				if(rx_msg.Data[2] == 0xFF){
 					is_2000_di_on = true;
 					Console::Instance()->printf("di is all on\r\n");
+				}
+				if(is_2000_di_on){
+					uint8_t result[4] = {0x56,0x78,0x0E,0xFF};
+					udpTx(result,4);
 				}
 				break;
 			default:

@@ -248,6 +248,11 @@ void CControllerSurveyorTask::udpRecieveRun()
 	len = net::recvfrom(socket_n, udp_rx_buff, BUFF_SIZE, MSG_DONTWAIT, (sockaddr *)&remoteaddr, &remoteaddrlen);
 	if( len > 0)
 	{
+		//Console::Instance()->printf("recieve data: %s\r\n", udp_rx_buff);
+		Console::Instance()->printf("recieve data: \r\n");
+		for(int i=0;i<len;i++){
+			Console::Instance()->printf("0x%02x,", udp_rx_buff[i]);
+		}
 		Console::Instance()->printf("recieve data: %s\r\n", udp_rx_buff);
 		len = len > BUFF_SIZE ? BUFF_SIZE : len;
 		memcpy(destip, &remoteaddr.sin_addr.s_addr, 4);
@@ -315,7 +320,7 @@ void CControllerSurveyorTask::detectWarningLight()
 		}
 		if(test_warning_light.isAbsoluteTimeUp())
 		{
-			if(is_warning_light_on){
+			if(!is_warning_light_on){
 				uint8_t result[4] = {0x56,0x78,0x13,0xFF};
 				udpTx(result,4);
 			}else{
@@ -343,10 +348,10 @@ void CControllerSurveyorTask::detectBrake()
 		}	
 		if(test_brake.isAbsoluteTimeUp())
 		{
-			if(is_brake12_ok && is_brake24_ok){
+			if(is_brake12_ok && is_brake24_ok && (can_test_case_select == 0x0B)){
 				uint8_t result[4] = {0x56,0x78,0x0B,0xFF};
 				udpTx(result,4);
-			}else if(!is_brake12_ok){
+			}else if(!is_brake12_ok && (can_test_case_select == 0x0C)){
 				uint8_t result[4] = {0x56,0x78,0x0C,0xFF};
 				udpTx(result,4);
 			}
@@ -370,7 +375,7 @@ void CControllerSurveyorTask::detectDelay()
 			is_delay_ok = false;
 		}
 		if(test_Delay.isAbsoluteTimeUp()){
-			if(is_delay_ok){
+			if(!is_delay_ok){
 				uint8_t result[4] = {0x56,0x78,0x0F,0xFF};
 				udpTx(result,4);
 			}else{
@@ -405,10 +410,10 @@ void CControllerSurveyorTask::detectEmergency()
 		}
 		if(test_emergency.isAbsoluteTimeUp())
 		{
-			if(is_emc_out2_ok && is_emc_out1_ok && is_emc_light_on){
+			if((is_emc_out2_ok && is_emc_out1_ok && is_emc_light_on) && (can_test_case_select == 0x07)){
 				uint8_t result[4] = {0x56,0x78,0x07,0xFF};
 				udpTx(result,4);
-			}else if(!is_emc_out2_ok && !is_emc_out1_ok && !is_emc_light_on){
+			}else if((!is_emc_out2_ok && !is_emc_out1_ok && !is_emc_light_on) && (can_test_case_select == 0x08)){
 				uint8_t result[4] = {0x56,0x78,0x08,0xFF};
 				udpTx(result,4);
 			}
@@ -425,30 +430,34 @@ void CControllerSurveyorTask::detectPDORun()
 	static Timer testdo(100,100);
 	if(detect_pdo_switch)
 	{
-		di_test_2000_do.ioctl(0x02);		//切换成DI模式
-		if(di_test_2000_do.read(GPIOG, GPIO_Pin_3) && di_test_2000_do.read(GPIOC, GPIO_Pin_8) &&
-		di_test_2000_do.read(GPIOG, GPIO_Pin_7) && di_test_2000_do.read(GPIOG, GPIO_Pin_8) &&
-		di_test_2000_do.read(GPIOC, GPIO_Pin_6) && di_test_2000_do.read(GPIOG, GPIO_Pin_5) &&
-		di_test_2000_do.read(GPIOG, GPIO_Pin_6)){
-			is_all_pdo_on = true;
-		}else{
-			is_all_pdo_on = false;
+		if(can_test_case_select == 0x04){
+			di_test_2000_do.ioctl(0x02);		//切换成DI模式
+			if(di_test_2000_do.read(GPIOG, GPIO_Pin_3) && di_test_2000_do.read(GPIOC, GPIO_Pin_8) &&
+			di_test_2000_do.read(GPIOG, GPIO_Pin_7) && di_test_2000_do.read(GPIOG, GPIO_Pin_8) &&
+			di_test_2000_do.read(GPIOC, GPIO_Pin_6) && di_test_2000_do.read(GPIOG, GPIO_Pin_5) &&
+			di_test_2000_do.read(GPIOG, GPIO_Pin_6)){
+				is_all_pdo_on = true;
+			}else{
+				is_all_pdo_on = false;
+			}
 		}
-		if(!di_test_2000_do.read(GPIOG, GPIO_Pin_3) && !di_test_2000_do.read(GPIOC, GPIO_Pin_8) &&
-		!di_test_2000_do.read(GPIOG, GPIO_Pin_7) && !di_test_2000_do.read(GPIOG, GPIO_Pin_8) &&
-		!di_test_2000_do.read(GPIOC, GPIO_Pin_6) && !di_test_2000_do.read(GPIOG, GPIO_Pin_5) &&
-		!di_test_2000_do.read(GPIOG, GPIO_Pin_6)){
-			is_all_pdo_off = true;
-		}else{
-			is_all_pdo_off = false;
+		if(can_test_case_select == 0x05){
+			if(!di_test_2000_do.read(GPIOG, GPIO_Pin_3) && !di_test_2000_do.read(GPIOC, GPIO_Pin_8) &&
+			!di_test_2000_do.read(GPIOG, GPIO_Pin_7) && !di_test_2000_do.read(GPIOG, GPIO_Pin_8) &&
+			!di_test_2000_do.read(GPIOC, GPIO_Pin_6) && !di_test_2000_do.read(GPIOG, GPIO_Pin_5) &&
+			!di_test_2000_do.read(GPIOG, GPIO_Pin_6)){
+				is_all_pdo_off = true;
+			}else{
+				is_all_pdo_off = false;
+			}
 		}
 		
 		if(testdo.isAbsoluteTimeUp())
 		{
-			if(is_all_pdo_on){
+			if(is_all_pdo_on && can_test_case_select == 0x04){
 				uint8_t result[4] = {0x56,0x78,0x04,0xFF};
 				udpTx(result,4);
-			}else if(is_all_pdo_off){
+			}else if(is_all_pdo_off && can_test_case_select == 0x05){
 				uint8_t result[4] = {0x56,0x78,0x05,0xFF};
 				udpTx(result,4);
 			}
@@ -663,6 +672,7 @@ void CControllerSurveyorTask::uart485Run()
 			{
 				is_485_test_ok[3] = true;
 				Console::Instance()->printf("485 TEST IS OK \r\n");
+				can_test_case_select = 0xFF;
 				transfer_frq.stop();
 				uint8_t result[4] = {0x56,0x78,0x02,0xFF};
 				udpTx(result,4);				
@@ -701,6 +711,7 @@ void CControllerSurveyorTask::uart232Run()
 				is_232_test_ok = true;
 				Console::Instance()->printf("232 TEST IS OK \r\n");
 				transfer_frq.stop();
+				can_test_case_select = 0xFF;
 				uint8_t result[4] = {0x56,0x78,0x01,0xFF};
 				udpTx(result,4);
 			}
@@ -792,6 +803,12 @@ void CControllerSurveyorTask::CanDispatchRun()
 			case 0x14:	//关闭报警灯
 				detect_warninglight = true;
 				break;
+			case 0x15:	//取UID
+				break;
+			case 0x16:	//取主版本
+				break;
+			case 0x17:	//取陀螺仪
+				break;
 			case 0xFF:
 				break;
 			default:
@@ -852,6 +869,24 @@ void CControllerSurveyorTask::CanDispatchRun()
 				if(is_2000_di_on){
 					uint8_t result[4] = {0x56,0x78,0x0E,0xFF};
 					udpTx(result,4);
+				}
+				break;
+			case 0x15:
+				{
+					uint8_t result[9] = {0x56,0x78,0x15,rx_msg.Data[2],rx_msg.Data[3],rx_msg.Data[4],rx_msg.Data[5],rx_msg.Data[6],rx_msg.Data[7]};
+					udpTx(result, 9);
+				}
+				break;
+			case 0x16:
+				{
+					uint8_t result[7] = {0x56,0x78,0x16,rx_msg.Data[2],rx_msg.Data[3],rx_msg.Data[4],rx_msg.Data[5]};
+					udpTx(result, 7);
+				}
+				break;
+			case 0x17:
+				{
+					uint8_t result[6] = {0x56,0x78,0x16,rx_msg.Data[2],rx_msg.Data[3],rx_msg.Data[4]};
+					udpTx(result, 6);	
 				}
 				break;
 			default:

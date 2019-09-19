@@ -804,10 +804,13 @@ void CControllerSurveyorTask::CanDispatchRun()
 				detect_warninglight = true;
 				break;
 			case 0x15:	//取UID
+				
 				break;
 			case 0x16:	//取主版本
+	
 				break;
 			case 0x17:	//取陀螺仪
+	
 				break;
 			case 0xFF:
 				break;
@@ -873,18 +876,21 @@ void CControllerSurveyorTask::CanDispatchRun()
 				break;
 			case 0x15:
 				{
+					can_dispatch_switch = false;
 					uint8_t result[9] = {0x56,0x78,0x15,rx_msg.Data[2],rx_msg.Data[3],rx_msg.Data[4],rx_msg.Data[5],rx_msg.Data[6],rx_msg.Data[7]};
 					udpTx(result, 9);
 				}
 				break;
 			case 0x16:
 				{
+					can_dispatch_switch = false;
 					uint8_t result[7] = {0x56,0x78,0x16,rx_msg.Data[2],rx_msg.Data[3],rx_msg.Data[4],rx_msg.Data[5]};
 					udpTx(result, 7);
 				}
 				break;
 			case 0x17:
 				{
+					can_dispatch_switch = false;
 					uint8_t result[6] = {0x56,0x78,0x16,rx_msg.Data[2],rx_msg.Data[3],rx_msg.Data[4]};
 					udpTx(result, 6);	
 				}

@@ -334,7 +334,7 @@ void CControllerSurveyorTask::detectWarningLight()
 
 void CControllerSurveyorTask::detectBrake()
 {
-	static Timer test_brake(100,100);
+	static Timer test_brake(150,150);
 	if(detect_brake)
 	{
 		di_test_2000_do.ioctl(0x02);		//切换成DI模式
@@ -351,7 +351,8 @@ void CControllerSurveyorTask::detectBrake()
 			if(is_brake12_ok && is_brake24_ok && (can_test_case_select == 0x0B)){
 				uint8_t result[4] = {0x56,0x78,0x0B,0xFF};
 				udpTx(result,4);
-			}else if(!is_brake12_ok && (can_test_case_select == 0x0C)){
+			}
+			if(!is_brake12_ok && (can_test_case_select == 0x0C)){
 				uint8_t result[4] = {0x56,0x78,0x0C,0xFF};
 				udpTx(result,4);
 			}
@@ -389,7 +390,7 @@ void CControllerSurveyorTask::detectDelay()
 
 void CControllerSurveyorTask::detectEmergency()
 {
-	static Timer test_emergency(100,100);
+	static Timer test_emergency(150,150);
 	if(detect_emergency)
 	{
 		di_test_2000_do.ioctl(0x02);		//切换成DI模式
@@ -413,7 +414,8 @@ void CControllerSurveyorTask::detectEmergency()
 			if((is_emc_out2_ok && is_emc_out1_ok && is_emc_light_on) && (can_test_case_select == 0x07)){
 				uint8_t result[4] = {0x56,0x78,0x07,0xFF};
 				udpTx(result,4);
-			}else if((!is_emc_out2_ok && !is_emc_out1_ok && !is_emc_light_on) && (can_test_case_select == 0x08)){
+			}
+			if((!is_emc_out2_ok && !is_emc_out1_ok && !is_emc_light_on) && (can_test_case_select == 0x08)){
 				uint8_t result[4] = {0x56,0x78,0x08,0xFF};
 				udpTx(result,4);
 			}
@@ -427,7 +429,7 @@ void CControllerSurveyorTask::detectEmergency()
 
 void CControllerSurveyorTask::detectPDORun()
 {
-	static Timer testdo(100,100);
+	static Timer testdo(150,150);
 	if(detect_pdo_switch)
 	{
 		if(can_test_case_select == 0x04){
@@ -457,7 +459,8 @@ void CControllerSurveyorTask::detectPDORun()
 			if(is_all_pdo_on && can_test_case_select == 0x04){
 				uint8_t result[4] = {0x56,0x78,0x04,0xFF};
 				udpTx(result,4);
-			}else if(is_all_pdo_off && can_test_case_select == 0x05){
+			}
+			if(is_all_pdo_off && can_test_case_select == 0x05){
 				uint8_t result[4] = {0x56,0x78,0x05,0xFF};
 				udpTx(result,4);
 			}

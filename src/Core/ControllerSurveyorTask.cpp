@@ -312,21 +312,26 @@ void CControllerSurveyorTask::detectWarningLight()
 	if(detect_warninglight)
 	{
 		di_test_2000_do.ioctl(0x02);		//切换成DI模式
-		if(di_test_2000_do.read(GPIOG, GPIO_Pin_4)){
+		if(di_test_2000_do.read(GPIOG, GPIO_Pin_4) && (can_test_case_select == 0x14)){
 			is_warning_light_on = true;
-			
+			uint8_t result[4] = {0x56,0x78,0x14,0xFF};
+			udpTx(result,4);
+			detect_warninglight = false;
 		}else{
-			is_warning_light_on = false;
+			if(can_test_case_select == 0x13){
+				uint8_t result[4] = {0x56,0x78,0x13,0xFF};
+				udpTx(result,4);
+				is_warning_light_on = false;
+				detect_warninglight = false;
+			}
 		}
 		if(test_warning_light.isAbsoluteTimeUp())
 		{
-			if(!is_warning_light_on){
-				uint8_t result[4] = {0x56,0x78,0x13,0xFF};
-				udpTx(result,4);
-			}else{
-				uint8_t result[4] = {0x56,0x78,0x14,0xFF};
-				udpTx(result,4);
-			}
+//			if(!is_warning_light_on){
+//				
+//			}else{
+//				
+//			}
 			Console::Instance()->printf("WARNING LIGHT  IS %d\r\n",di_test_2000_do.read(GPIOG, GPIO_Pin_4));
 		}
 	}
@@ -345,17 +350,20 @@ void CControllerSurveyorTask::detectBrake()
 		}
 		if(di_test_2000_do.read(GPIOC, GPIO_Pin_9)){
 			is_brake24_ok = true;
-		}	
+		}
+		if(is_brake12_ok && is_brake24_ok && (can_test_case_select == 0x0B)){
+			uint8_t result[4] = {0x56,0x78,0x0B,0xFF};
+			udpTx(result,4);
+			detect_brake = false;
+		}
+		if(!is_brake12_ok && (can_test_case_select == 0x0C)){
+			uint8_t result[4] = {0x56,0x78,0x0C,0xFF};
+			udpTx(result,4);
+			detect_brake = false;
+		}		
 		if(test_brake.isAbsoluteTimeUp())
 		{
-			if(is_brake12_ok && is_brake24_ok && (can_test_case_select == 0x0B)){
-				uint8_t result[4] = {0x56,0x78,0x0B,0xFF};
-				udpTx(result,4);
-			}
-			if(!is_brake12_ok && (can_test_case_select == 0x0C)){
-				uint8_t result[4] = {0x56,0x78,0x0C,0xFF};
-				udpTx(result,4);
-			}
+			
 			Console::Instance()->printf("BRAKE 12 IS %d\r\n",di_test_2000_do.read(GPIOC, GPIO_Pin_7));
 			Console::Instance()->printf("BRAKE 24 IS %d\r\n",di_test_2000_do.read(GPIOC, GPIO_Pin_9));
 			Console::Instance()->printf("is_brake12_ok %d\r\n",is_brake12_ok);
@@ -370,19 +378,25 @@ void CControllerSurveyorTask::detectDelay()
 	if(detect_delay)
 	{
 		di_test_2000_do.ioctl(0x02);		//切换成DI模式
-		if(di_test_2000_do.read(GPIOA, GPIO_Pin_8) && di_test_2000_do.read(GPIOA, GPIO_Pin_9)){
+		if(di_test_2000_do.read(GPIOA, GPIO_Pin_8) && di_test_2000_do.read(GPIOA, GPIO_Pin_9) && (can_test_case_select == 0x10)){
 			is_delay_ok = true;
+			uint8_t result[4] = {0x56,0x78,0x10,0xFF};
+			udpTx(result,4);
+			detect_delay = false;
 		}else{
-			is_delay_ok = false;
-		}
-		if(test_Delay.isAbsoluteTimeUp()){
-			if(!is_delay_ok){
+			if((can_test_case_select == 0x0F)){
+				is_delay_ok = false;
 				uint8_t result[4] = {0x56,0x78,0x0F,0xFF};
 				udpTx(result,4);
-			}else{
-				uint8_t result[4] = {0x56,0x78,0x10,0xFF};
-				udpTx(result,4);
-			}
+				detect_delay = false;
+			}	
+		}
+		if(test_Delay.isAbsoluteTimeUp()){
+//			if(!is_delay_ok){
+//				
+//			}else{
+//				
+//			}
 			Console::Instance()->printf("is_delay_ok %d\r\n",is_delay_ok);
 		}	
 	}
@@ -390,7 +404,7 @@ void CControllerSurveyorTask::detectDelay()
 
 void CControllerSurveyorTask::detectEmergency()
 {
-	static Timer test_emergency(150,150);
+	static Timer test_emergency(100,100);
 	if(detect_emergency)
 	{
 		di_test_2000_do.ioctl(0x02);		//切换成DI模式
@@ -409,16 +423,18 @@ void CControllerSurveyorTask::detectEmergency()
 		}else{
 			is_emc_light_on = false;
 		}
+		if((is_emc_out2_ok && is_emc_out1_ok && is_emc_light_on) && (can_test_case_select == 0x07)){
+			uint8_t result[4] = {0x56,0x78,0x07,0xFF};
+			udpTx(result,4);
+			detect_emergency = false;
+		}
+		if((!is_emc_out2_ok && !is_emc_out1_ok && !is_emc_light_on) && (can_test_case_select == 0x08)){
+			uint8_t result[4] = {0x56,0x78,0x08,0xFF};
+			udpTx(result,4);
+			detect_emergency = false;
+		}
 		if(test_emergency.isAbsoluteTimeUp())
 		{
-			if((is_emc_out2_ok && is_emc_out1_ok && is_emc_light_on) && (can_test_case_select == 0x07)){
-				uint8_t result[4] = {0x56,0x78,0x07,0xFF};
-				udpTx(result,4);
-			}
-			if((!is_emc_out2_ok && !is_emc_out1_ok && !is_emc_light_on) && (can_test_case_select == 0x08)){
-				uint8_t result[4] = {0x56,0x78,0x08,0xFF};
-				udpTx(result,4);
-			}
 			Console::Instance()->printf("\r\n");
 			Console::Instance()->printf("EMERGENCE_OUT_2  IS %d\r\n",di_test_2000_do.read(GPIOD, GPIO_Pin_13));
 			Console::Instance()->printf("EMERGENCE_OUT_1  IS %d\r\n",di_test_2000_do.read(GPIOD, GPIO_Pin_14));
@@ -429,16 +445,19 @@ void CControllerSurveyorTask::detectEmergency()
 
 void CControllerSurveyorTask::detectPDORun()
 {
-	static Timer testdo(150,150);
+	static Timer testdo(100,100);
 	if(detect_pdo_switch)
 	{
-		if(can_test_case_select == 0x04){
-			di_test_2000_do.ioctl(0x02);		//切换成DI模式
+		di_test_2000_do.ioctl(0x02);//切换成DI模式
+		if(can_test_case_select == 0x04){		
 			if(di_test_2000_do.read(GPIOG, GPIO_Pin_3) && di_test_2000_do.read(GPIOC, GPIO_Pin_8) &&
 			di_test_2000_do.read(GPIOG, GPIO_Pin_7) && di_test_2000_do.read(GPIOG, GPIO_Pin_8) &&
 			di_test_2000_do.read(GPIOC, GPIO_Pin_6) && di_test_2000_do.read(GPIOG, GPIO_Pin_5) &&
 			di_test_2000_do.read(GPIOG, GPIO_Pin_6)){
 				is_all_pdo_on = true;
+				uint8_t result[4] = {0x56,0x78,0x04,0xFF};
+				udpTx(result,4);
+				detect_pdo_switch = false;
 			}else{
 				is_all_pdo_on = false;
 			}
@@ -449,21 +468,15 @@ void CControllerSurveyorTask::detectPDORun()
 			!di_test_2000_do.read(GPIOC, GPIO_Pin_6) && !di_test_2000_do.read(GPIOG, GPIO_Pin_5) &&
 			!di_test_2000_do.read(GPIOG, GPIO_Pin_6)){
 				is_all_pdo_off = true;
+				uint8_t result[4] = {0x56,0x78,0x05,0xFF};
+				udpTx(result,4);
+				detect_pdo_switch = false;
 			}else{
 				is_all_pdo_off = false;
 			}
 		}
-		
 		if(testdo.isAbsoluteTimeUp())
 		{
-			if(is_all_pdo_on && can_test_case_select == 0x04){
-				uint8_t result[4] = {0x56,0x78,0x04,0xFF};
-				udpTx(result,4);
-			}
-			if(is_all_pdo_off && can_test_case_select == 0x05){
-				uint8_t result[4] = {0x56,0x78,0x05,0xFF};
-				udpTx(result,4);
-			}
 			Console::Instance()->printf("\r\n");
 			Console::Instance()->printf("pdo test on status is %d\r\n", is_all_pdo_on);
 			Console::Instance()->printf("pdo test off status is %d\r\n", is_all_pdo_off);
@@ -475,7 +488,7 @@ void CControllerSurveyorTask::detectPDORun()
 			Console::Instance()->printf("DO5  IS %d\r\n",di_test_2000_do.read(GPIOG, GPIO_Pin_5));
 			Console::Instance()->printf("DO6  IS %d\r\n",di_test_2000_do.read(GPIOG, GPIO_Pin_6));
 		}	
-	}
+	}	
 }
 
 void CControllerSurveyorTask::detectPCLight()
@@ -500,7 +513,7 @@ void CControllerSurveyorTask::detectPCLight()
 				uint8_t result[4] = {0x56,0x78,0x06,0x00};
 				udpTx(result,4);
 			}
-			Console::Instance()->printf("bootlight IS %d\r\n",di_test_2000_do.read(GPIOG, GPIO_Pin_2));
+			//Console::Instance()->printf("bootlight IS %d\r\n",di_test_2000_do.read(GPIOG, GPIO_Pin_2));
 		}
 	}	
 }
@@ -725,7 +738,7 @@ void CControllerSurveyorTask::uart232Run()
 #include "string.h"
 void CControllerSurveyorTask::CanDispatchRun()
 {
-	static Timer can_transfer_freq(100,100);
+	static Timer can_transfer_freq(50,50);
 	if (can_transfer_freq.isAbsoluteTimeUp() && can_dispatch_switch)
     {
 		//resetAllSwitch();
@@ -821,7 +834,8 @@ void CControllerSurveyorTask::CanDispatchRun()
 				break;
 		}	
 		memcpy(msg.Data, &can_test_case_select, 1);
-        CanRouter1.putMsg(msg);      
+        CanRouter1.putMsg(msg);
+		can_dispatch_switch = false;
     }
     if (can_dispatch.msgsInQue() > 0)
     {
@@ -902,7 +916,7 @@ void CControllerSurveyorTask::CanDispatchRun()
 				break;
 		}
 		
-		if(can_dispatch_times_counter++ > 10)
+		if(can_dispatch_times_counter++ > 5)
 			can_dispatch_switch = false;
     }
 }

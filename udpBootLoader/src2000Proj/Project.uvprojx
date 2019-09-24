@@ -62,7 +62,7 @@
           <BeforeCompile>
             <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name></UserProg1Name>
+            <UserProg1Name>python.exe ../../toolchain/updateIP.py</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -72,7 +72,7 @@
           <BeforeMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>python.exe ../../toolchain/updateIP.py</UserProg1Name>
+            <UserProg1Name>python.exe ../../toolchain/updateIP.py 14</UserProg1Name>
             <UserProg2Name>python.exe ../toolchain/modifyStartAddress.py</UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -136,8 +136,8 @@
             <Capability>1</Capability>
             <DriverSelection>4099</DriverSelection>
           </Flash1>
-          <bUseTDR>0</bUseTDR>
-          <Flash2>Segger\JL2CM3.dll</Flash2>
+          <bUseTDR>1</bUseTDR>
+          <Flash2>BIN\UL2CM3.DLL</Flash2>
           <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>

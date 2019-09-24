@@ -1,49 +1,29 @@
-import json, os, stat, sys
-
+import os,sys
 os.chdir(sys.path[0])
+lwip_comm_c_addr = "../src/LWIP/lwip_app/lwip_comm/lwip_comm.c"
 
-outFilename = '..\\src\\utility\\network_conf.h'
-ipconfig_json = '..\\src\\User\\ipconfig.json'
-binFile = '..\\Output\\Project.bin'
+# lwip_str = input("输入ip最后一位：\n")
+lwip_write_str = str(sys.argv[1])#lwip_str
+f = open(lwip_comm_c_addr,encoding="GB2312")
+rewrite_content = []
+for i in f.readlines():
+	if "lwipx->ip[3]=" in i:
+		i = "\tlwipx->ip[3]=" + lwip_write_str + ";\n" 
+		print(i)
+	rewrite_content.append(i) 
+f.close()
+f2 = open(lwip_comm_c_addr,"w")
+f2.writelines(rewrite_content)
+f2.close()
 
-try:
-	if(os.stat(ipconfig_json)[stat.ST_MTIME] > os.stat(outFilename)[stat.ST_MTIME]):
-		print(ipconfig_json + 'modified. Updating' + outFilename + '...')
-	else:
-		print('nothing to be done for all')
-		quit()
-except Exception as e:
-	print(e)
-	print('time compare exception')
-
-with open(ipconfig_json,'r') as f:
-    data = json.load(f)
-    f.close()
-
-ipv4_addr = '#define IPV4_ADDR\t\t\t\t{' + data['inet addr'].replace('.', ', ') + '}\n'
-ipv4_gateway = '#define IPV4_GATEWAY\t\t{' + data['Gateway'].replace('.', ', ') + '}\n'
-ipv4_broadcast = '#define IPV4_BROADCAST\t{' + data['Bcast'].replace('.', ', ') + '}\n'
-ipv4_subnetmask = '#define IPV4_SUBNETMASK\t{' + data['Mask'].replace('.', ', ') + '}\n'
-mac_addr = '#define MAC_ADDR\t\t\t\t{0x' + data['HWaddr fc'].replace(':', ', 0x') + '}\n'
-# print (mac_addr)
-
-try:
-	os.chmod(outFilename, 755)
-except:
-	pass
-	
-output = open(outFilename, 'w')
-
-output.write('//Attention: This file is created by Python script.\n')
-output.write('//Keep this file READ-ONLY.\n//If you want to change the ipconfig, edit on /User/ipconfig.json\n\n')
-output.write('#ifndef NETWORKD_CONF_H\n#define NETWORKD_CONF_H\n\n')
-output.write(ipv4_addr)
-output.write(ipv4_gateway)
-output.write(ipv4_broadcast)
-output.write(ipv4_subnetmask)
-output.write(mac_addr)
-output.write('\n#endif\n')
-
-output.close()
-os.chmod(outFilename, 111)
-print("IP address updated.")
+down_firmware_addr = "../iapTool/F4Kernel/loadf4kernel.py"
+f3 = open(down_firmware_addr, encoding="GB2312")
+py_rewrite_content = []
+for i in f3.readlines():
+	if "F4K_ip = '192.168.192." in i:
+		i = "\t\tF4K_ip = '192.168.192." + lwip_write_str + "'\n"
+	py_rewrite_content.append(i)
+f3.close()
+f4 = open(down_firmware_addr,"w")
+f4.writelines(py_rewrite_content)
+f4.close()

@@ -18,6 +18,7 @@ namespace{
 	const uint16_t BUFF_SIZE = 300;
 	uint8_t udp_tx_buff[BUFF_SIZE];
 	uint8_t udp_rx_buff[BUFF_SIZE];
+	static uint8_t hardware_version = 0;
 }
 
 namespace
@@ -343,30 +344,49 @@ void CControllerSurveyorTask::detectBrake()
 	if(detect_brake)
 	{
 		di_test_2000_do.ioctl(0x02);		//切换成DI模式
-		if(di_test_2000_do.read(GPIOC, GPIO_Pin_7)){
-			is_brake12_ok = true;
-		}else{
-			is_brake12_ok = false;
+		if(hardware_version < 5){
+			if(di_test_2000_do.read(GPIOC, GPIO_Pin_7)){
+				is_brake12_ok = true;
+			}else{
+				is_brake12_ok = false;
+			}
 		}
+		
 		if(di_test_2000_do.read(GPIOC, GPIO_Pin_9)){
 			is_brake24_ok = true;
+		}else{
+			is_brake24_ok = false;
 		}
-		if(is_brake12_ok && is_brake24_ok && (can_test_case_select == 0x0B)){
-			uint8_t result[4] = {0x56,0x78,0x0B,0xFF};
-			udpTx(result,4);
-			detect_brake = false;
-		}
-		if(!is_brake12_ok && (can_test_case_select == 0x0C)){
-			uint8_t result[4] = {0x56,0x78,0x0C,0xFF};
-			udpTx(result,4);
-			detect_brake = false;
-		}		
+		if(hardware_version < 5){
+			if(is_brake12_ok && is_brake24_ok && (can_test_case_select == 0x0B)){
+				uint8_t result[4] = {0x56,0x78,0x0B,0xFF};
+				udpTx(result,4);
+				detect_brake = false;
+			}
+			if(!is_brake12_ok && (can_test_case_select == 0x0C)){
+				uint8_t result[4] = {0x56,0x78,0x0C,0xFF};
+				udpTx(result,4);
+				detect_brake = false;
+			}
+		}else{
+			if(is_brake24_ok && (can_test_case_select == 0x0B)){
+				uint8_t result[4] = {0x56,0x78,0x0B,0xFF};
+				udpTx(result,4);
+				detect_brake = false;
+			}
+			if(!is_brake24_ok && (can_test_case_select == 0x0C)){
+				uint8_t result[4] = {0x56,0x78,0x0C,0xFF};
+				udpTx(result,4);
+				detect_brake = false;
+			}
+		}			
 		if(test_brake.isAbsoluteTimeUp())
 		{
-			
-			Console::Instance()->printf("BRAKE 12 IS %d\r\n",di_test_2000_do.read(GPIOC, GPIO_Pin_7));
+			if(hardware_version < 5)
+				Console::Instance()->printf("BRAKE 12 IS %d\r\n",di_test_2000_do.read(GPIOC, GPIO_Pin_7));
 			Console::Instance()->printf("BRAKE 24 IS %d\r\n",di_test_2000_do.read(GPIOC, GPIO_Pin_9));
-			Console::Instance()->printf("is_brake12_ok %d\r\n",is_brake12_ok);
+			if(hardware_version < 5)
+				Console::Instance()->printf("is_brake12_ok %d\r\n",is_brake12_ok);
 			Console::Instance()->printf("is_brake24_ok %d\r\n",is_brake24_ok);
 		}	
 	}
@@ -383,20 +403,19 @@ void CControllerSurveyorTask::detectDelay()
 			uint8_t result[4] = {0x56,0x78,0x10,0xFF};
 			udpTx(result,4);
 			detect_delay = false;
+			Console::Instance()->printf("PA8 %d\r\n",di_test_2000_do.read(GPIOA, GPIO_Pin_8));
+			Console::Instance()->printf("PA9 %d\r\n",di_test_2000_do.read(GPIOA, GPIO_Pin_9));
 		}else{
-			if((can_test_case_select == 0x0F)){
+			if(!di_test_2000_do.read(GPIOA, GPIO_Pin_8) && !di_test_2000_do.read(GPIOA, GPIO_Pin_9) && (can_test_case_select == 0x0F)){	//断开继电器
 				is_delay_ok = false;
 				uint8_t result[4] = {0x56,0x78,0x0F,0xFF};
 				udpTx(result,4);
 				detect_delay = false;
+				Console::Instance()->printf("PA8 %d\r\n",di_test_2000_do.read(GPIOA, GPIO_Pin_8));
+				Console::Instance()->printf("PA9 %d\r\n",di_test_2000_do.read(GPIOA, GPIO_Pin_9));
 			}	
 		}
 		if(test_Delay.isAbsoluteTimeUp()){
-//			if(!is_delay_ok){
-//				
-//			}else{
-//				
-//			}
 			Console::Instance()->printf("is_delay_ok %d\r\n",is_delay_ok);
 		}	
 	}
@@ -541,11 +560,17 @@ void CControllerSurveyorTask::brakeOrDIRun()
 		do_test_2000_di.ioctl(0x01);
 		do_test_2000_di.write(0, GPIOD, GPIO_Pin_11);			//松开DI，抱闸不输出
 		//Console::Instance()->printf("brake test started \r\n");
+//		do_test_2000_di.ioctl(0x02);
+//		
+//		if(di_test_2000_do.read(GPIOC, GPIO_Pin_9)){
+//			is_brake24_ok = true;
+//		}
 	}
 	else
 	{
 		do_test_2000_di.ioctl(0x01);
 		do_test_2000_di.write(1, GPIOD, GPIO_Pin_11);			//DI短接，抱闸输出24到12
+		
 		//Console::Instance()->printf("DI test started \r\n");
 	}
 }
@@ -902,6 +927,7 @@ void CControllerSurveyorTask::CanDispatchRun()
 				{
 					can_dispatch_switch = false;
 					uint8_t result[7] = {0x56,0x78,0x16,rx_msg.Data[2],rx_msg.Data[3],rx_msg.Data[4],rx_msg.Data[5]};
+					hardware_version = rx_msg.Data[6];
 					udpTx(result, 7);
 				}
 				break;

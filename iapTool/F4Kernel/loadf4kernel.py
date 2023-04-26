@@ -21,7 +21,7 @@ def load(argv):
         F4K_ip = data['inet addr']
 
     except:
-        F4K_ip = '192.168.192.7'
+		F4K_ip = '192.168.192.176'
         # F4K_ip = '127.0.0.1'
 
     if(2 == len(argv)):

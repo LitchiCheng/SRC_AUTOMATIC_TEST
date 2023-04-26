@@ -72,7 +72,7 @@
           <BeforeMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>python.exe ../../toolchain/updateIP.py 14</UserProg1Name>
+            <UserProg1Name>python.exe ../../toolchain/updateIP.py</UserProg1Name>
             <UserProg2Name>python.exe ../toolchain/modifyStartAddress.py</UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -81,9 +81,9 @@
           </BeforeMake>
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
-            <RunUserProg2>0</RunUserProg2>
+            <RunUserProg2>1</RunUserProg2>
             <UserProg1Name>fromelf.exe --bin -o "$L@L.sc2b.bin" "#L"</UserProg1Name>
-            <UserProg2Name>python.exe ../bl_flasher.py</UserProg2Name>
+            <UserProg2Name>python.exe ../../toolchain/renameBL.py</UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopA1X>0</nStopA1X>
